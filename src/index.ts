@@ -1,17 +1,15 @@
-import express, { Application } from "express";
-import dotenv from "dotenv";
-import morgan from "morgan";
-import router from "./routes";
+import express, { Express, Request, Response } from 'express';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const PORT = process.env.PORT || 8000;
-const app: Application = express();
+const app: Express = express();
+const port = process.env.PORT;
 
-app.use(morgan("tiny"));
-app.use(router);
-app.use(express.static("public"));
+app.get('/', (req: Request, res: Response) => {
+  res.send('Express + TypeScript Server');
+});
 
-app.listen(PORT, () => {
-  console.log("Server is running on URL", `http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
