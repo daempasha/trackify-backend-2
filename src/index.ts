@@ -10,6 +10,7 @@ const app: Application = express();
 
 app.use(morgan("tiny"));
 app.use(router);
+app.use(express.static("public"));
 
 app.listen(PORT, () => {
   console.log("Server is running on URL", `http://localhost:${PORT}`);

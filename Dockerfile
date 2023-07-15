@@ -4,8 +4,6 @@ FROM node:16
 # Setup env
 ENV PORT 8000
 
-
-
 WORKDIR /app
 
 COPY package*.json ./
