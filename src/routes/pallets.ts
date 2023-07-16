@@ -4,10 +4,72 @@ import { Item } from "../models/items";
 import { PreformattedPallet } from "../types/preformatPallets";
 import multer from "multer";
 import xlsx from "xlsx";
+import mongoose from "mongoose";
 
+// const columnNames = [
+//   "asin",
+//   "category",
+//   "condition",
+//   "description",
+//   "ean",
+//   "ebay_item_id",
+//   "id",
+//   "image_url",
+//   "item_condition",
+//   "name",
+//   "pallet_id",
+//   "postage",
+//   "price",
+//   "quantity",
+//   "status",
+// ];
 const upload = multer();
 
 const router = express.Router();
+
+interface FormattedItem {
+  Title: string;
+  Description: string;
+  EAN: string;
+  Quantity?: number;
+  Currency: string;
+  Country: string;
+}
+
+function formatRows(palletId: mongoose.Types.ObjectId, jsonData: PreformattedPallet[]) {
+  return jsonData.map((itemData) => ({
+    Title: itemData.Item,
+    Description: itemData.Item,
+    EAN: itemData.EAN,
+    Quantity: itemData.Quantity,
+    Currency: "GBP",
+    Country: "GB",
+    pallet: palletId,
+  }));
+}
+
+function formatQuantity(data: FormattedItem[]) {
+  let formattedData = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    for (let j = 0; j < row.Quantity!; j++) {
+      const { Quantity, ...restOfRow } = row;
+      formattedData.push({ ...restOfRow, Title: j > 0 ? `${row.Title} - ${j}` : row.Title });
+    }
+  }
+
+  return formattedData;
+}
+
+function formatLength(data: FormattedItem[]) {
+  return data.map((item) => {
+    return {
+      ...item,
+      Title: item.Title.length >= 76 ? item.Title.substring(0, 76) : item.Title,
+    };
+  });
+}
 
 router.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
   const file = req.file;
@@ -19,39 +81,16 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
 
   const jsonData: PreformattedPallet[] = xlsx.utils.sheet_to_json(worksheet);
 
-  // Create models
   const pallet = new Pallet({
     name: jsonData[0].LOT,
   });
-  const newPallet = await pallet.save();
+  await pallet.save();
 
-  const columnNames = [
-    "asin",
-    "category",
-    "condition",
-    "description",
-    "ean",
-    "ebay_item_id",
-    "id",
-    "image_url",
-    "item_condition",
-    "name",
-    "pallet_id",
-    "postage",
-    "price",
-    "quantity",
-    "status",
-  ];
-  await Item.insertMany(
-    jsonData.map((itemData) => ({
-      Title: itemData.Item,
-      Description: itemData.Item,
-      EAN: itemData.EAN,
-      Currency: "GBP",
-      Country: "GB",
-      pallet: newPallet._id,
-    })),
-  );
+  const formattedData = formatRows(pallet._id, jsonData);
+  const formatLimitLength = formatLength(formattedData);
+  const formattedQuantityData = formatQuantity(formatLimitLength);
+
+  await Item.insertMany(formattedQuantityData);
   res.status(201).json({ message: "Succesfully imported pallet!" });
   // res.send(jsonData);
 });
@@ -126,6 +165,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
   try {
     await Pallet.deleteOne({ _id: id });
+    await Item.deleteMany({ pallet: id });
     res.status(201).json({ message: "Successfully deleted pallet!" });
   } catch (err: any) {
     res.status(400).json({ message: err.message });
