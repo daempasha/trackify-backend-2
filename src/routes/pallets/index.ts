@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
-import { Pallet } from "../models/pallets";
-import { Item } from "../models/items";
+import { Pallet } from "../../models/pallets";
+import { Item } from "../../models/items";
 import { FormattedItem, PreformattedPallet } from "./types";
 import multer from "multer";
 import xlsx from "xlsx";
@@ -46,10 +46,17 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
 router.get("/", async (req: Request, res: Response) => {
   try {
     const pallets = await Pallet.find();
+
     res.json({ data: pallets });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
+});
+
+router.get("/:id/details", async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const pallet = await Pallet.findOne({ _id: id });
+  res.send({ message: "Succesfully retrieved details", data: pallet });
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
