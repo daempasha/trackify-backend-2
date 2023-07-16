@@ -24,13 +24,9 @@ app.use(cors());
 
 mongoose.connect(mongodb_uri).then(() => console.log("Connected!"));
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Express + TypeScript Server");
-});
-
 app.use("/api/pallets", palletRouter);
 app.use("/api/items", itemsRouter);
 
 app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+  console.log(` ⚡️[server]: Server is running at http://localhost:${port}`);
 });

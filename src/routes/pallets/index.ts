@@ -43,16 +43,6 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
   // res.send(jsonData);
 });
 
-router.get("/", async (req: Request, res: Response) => {
-  try {
-    const pallets = await Pallet.find();
-
-    res.json({ data: pallets });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 router.get("/:id/details", async (req: Request, res: Response) => {
   const id = req.params.id;
   const pallet = await Pallet.findOne({ _id: id });
@@ -100,6 +90,26 @@ router.get("/:id", async (req: Request, res: Response) => {
     currentPage: pageNumber,
     totalRows: itemCount,
   });
+});
+
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const pallets = await Pallet.find();
+
+    const updatedPallets = await Promise.all(
+      pallets.map(async (pallet) => {
+        const itemCount = await Item.countDocuments({ pallet: pallet.id });
+        return {
+          ...pallet.toObject(),
+          itemCount,
+        };
+      }),
+    );
+
+    res.json({ data: updatedPallets });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 router.post("/", async (req: Request, res: Response) => {
