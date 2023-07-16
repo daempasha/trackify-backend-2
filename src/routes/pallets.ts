@@ -1,66 +1,14 @@
 import express, { Request, Response } from "express";
 import { Pallet } from "../models/pallets";
 import { Item } from "../models/items";
-import { PreformattedPallet } from "../types/preformatPallets";
+import { FormattedItem, PreformattedPallet } from "./types";
 import multer from "multer";
 import xlsx from "xlsx";
-import mongoose from "mongoose";
+import { formatQuantity, formatRows } from "./helpers";
 
-// const columnNames = [
-//   "asin",
-//   "category",
-//   "condition",
-//   "description",
-//   "ean",
-//   "ebay_item_id",
-//   "id",
-//   "image_url",
-//   "item_condition",
-//   "name",
-//   "pallet_id",
-//   "postage",
-//   "price",
-//   "quantity",
-//   "status",
-// ];
 const upload = multer();
 
 const router = express.Router();
-
-interface FormattedItem {
-  Title: string;
-  Description: string;
-  EAN: string;
-  Quantity?: number;
-  Currency: string;
-  Country: string;
-}
-
-function formatRows(palletId: mongoose.Types.ObjectId, jsonData: PreformattedPallet[]) {
-  return jsonData.map((itemData) => ({
-    Title: itemData.Item,
-    Description: itemData.Item,
-    EAN: itemData.EAN,
-    Quantity: itemData.Quantity,
-    Currency: "GBP",
-    Country: "GB",
-    pallet: palletId,
-  }));
-}
-
-function formatQuantity(data: FormattedItem[]) {
-  let formattedData = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const row = data[i];
-    for (let j = 0; j < row.Quantity!; j++) {
-      const { Quantity, ...restOfRow } = row;
-      formattedData.push({ ...restOfRow, Title: j > 0 ? `${row.Title} - ${j}` : row.Title });
-    }
-  }
-
-  return formattedData;
-}
 
 function formatLength(data: FormattedItem[]) {
   return data.map((item) => {

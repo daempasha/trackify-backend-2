@@ -8,3 +8,12 @@ export interface PreformattedPallet {
   "Est. selling price on Az": string;
   EAN: string;
 }
+
+export interface FormattedItem {
+  Title: string;
+  Description: string;
+  EAN: string;
+  Quantity?: number;
+  Currency: string;
+  Country: string;
+}
