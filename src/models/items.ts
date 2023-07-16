@@ -2,11 +2,19 @@ import mongoose from "mongoose";
 
 const itemSchema = new mongoose.Schema(
   {
+    // Title: itemData.Item,
+    // Description: itemData.Item,
+    // Currency: "GBP",
+    // Country: "GB",
+    // pallet: newPallet._id,
     pallet: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Pallet",
     },
-    name: {
+    Title: {
+      type: String,
+    },
+    Description: {
       type: String,
     },
     _dateImported: {
