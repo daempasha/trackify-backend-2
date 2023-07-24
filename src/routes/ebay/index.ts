@@ -20,8 +20,7 @@ interface CategoriesBody {
 
 router.get("/suggest-category", async (req: Request, res: Response) => {
   const accessToken = req.headers["x-ebay-access-token"];
-  
-  console.log("token: ", accessToken);
+
   const query = req.query.q;
   const eBay = new eBayApi({
     ...ebayApiConfig,
