@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import palletRouter from "./routes/pallets";
 import itemsRouter from "./routes/items";
 import ebayRouter from "./routes/ebay";
-import bodyParser from "body-parser";
 import cors from "cors";
 import morgan from "morgan";
 
