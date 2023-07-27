@@ -29,6 +29,10 @@ app.use("/api/pallets", palletRouter);
 app.use("/api/items", itemsRouter);
 app.use("/api/ebay", ebayRouter);
 
+app.get("/test", (req: Request, res: Response) => {
+  res.send({ message: "Hello world" });
+});
+
 app.listen(port, () => {
   console.log(` ⚡️[server]: Server is running at http://localhost:${port}`);
 });
