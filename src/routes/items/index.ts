@@ -1,10 +1,8 @@
 import express, { Request, Response } from "express";
 import { Item } from "../../models/items";
 import multer from "multer";
-import { S3Client } from "@aws-sdk/client-s3";
 
 const router = express.Router();
-const s3 = new S3Client({});
 const upload = multer();
 
 router.patch("/:id", upload.single("file"), async (req: Request, res: Response) => {
