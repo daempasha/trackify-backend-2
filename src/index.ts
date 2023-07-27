@@ -16,11 +16,11 @@ const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/tracki
 
 app.use(morgan("tiny"));
 app.use(
-  bodyParser.urlencoded({
+  express.urlencoded({
     extended: true,
   }),
 );
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors());
 
 mongoose.connect(mongodb_uri).then(() => console.log("Connected!"));
