@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --legacy-watch 'src/**/*' -e 'ts-node' src/index.ts"
+    "dev": "nodemon --legacy-watch 'src/**/*' -e ts,js src/index.ts"
   },
   "keywords": [],
   "author": "",
