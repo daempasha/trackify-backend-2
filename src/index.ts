@@ -1,17 +1,37 @@
-import express, { Application } from "express";
+import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
+import palletRouter from "./routes/pallets";
+import itemsRouter from "./routes/items";
+import ebayRouter from "./routes/ebay";
+import cors from "cors";
 import morgan from "morgan";
-import router from "./routes";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 8000;
-const app: Application = express();
+const app: Express = express();
+const port = process.env.PORT;
+const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
 
 app.use(morgan("tiny"));
-app.use(router);
-app.use(express.static("public"));
+app.use(
+  express.urlencoded({
+    extended: true,
+  }),
+);
+app.use(express.json());
+app.use(cors());
 
-app.listen(PORT, () => {
-  console.log("Server is running on URL", `http://localhost:${PORT}`);
+mongoose.connect(mongodb_uri).then(() => console.log("Connected!"));
+
+app.use("/api/pallets", palletRouter);
+app.use("/api/items", itemsRouter);
+app.use("/api/ebay", ebayRouter);
+
+app.get("/test", (req: Request, res: Response) => {
+  res.send({ message: "Hello world" });
+});
+
+app.listen(port, () => {
+  console.log(` ⚡️[server]: Server is running at http://localhost:${port}`);
 });

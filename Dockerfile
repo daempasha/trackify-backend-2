@@ -1,17 +1,23 @@
+# Use the official Node.js image as the base image
 FROM node:16
 
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Setup env
-ENV PORT 8000
-
-WORKDIR /app
-
+# Copy the package.json and package-lock.json to the container
 COPY package*.json ./
 
+# Install dependencies
 RUN npm install
 
+# Copy the rest of the application files to the container
 COPY . .
 
-EXPOSE ${PORT}
+# Build the application, if necessary
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+# Expose the port that the Express application is running on
+EXPOSE 8000
+
+# Define the command to run your application
+CMD ["npm", "start"] 
