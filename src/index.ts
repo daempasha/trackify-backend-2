@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { MongoClient } from 'mongodb';
 import palletRouter from "./routes/pallets";
 import itemsRouter from "./routes/items";
 import ebayRouter from "./routes/ebay";
@@ -15,15 +16,27 @@ const app: Express = express();
 const port = process.env.PORT;
 
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
-const ca = [fs.readFileSync(path.join(__dirname, 'global-bundle.pem'))]; // provide the path to your certificate
+const ca = fs.readFileSync(path.join(__dirname, 'global-bundle.pem'), 'utf8'); // provide the path to your certificate
 
 const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    ssl: true,
     sslValidate: true,
     sslCA: ca,
+    sslKey: ca,
+    sslCert: ca,
     retryWrites: false
 };
+
+const client = new MongoClient(mongodb_uri, options);
+
+client.connect()
+    .then(() => {
+        console.log("Connected!");
+        mongoose.connection.useDb('trackify');
+    })
+    .catch(err => console.error(err));
 
 app.use(morgan("tiny"));
 app.use(
@@ -33,10 +46,6 @@ app.use(
 );
 app.use(express.json());
 app.use(cors());
-
-mongoose.connect(mongodb_uri, options)
-    .then(() => console.log("Connected!"))
-    .catch(err => console.error(err));
 
 app.use("/api/pallets", palletRouter);
 app.use("/api/items", itemsRouter);
