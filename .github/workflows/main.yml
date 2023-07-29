@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  ENVIRONMENT: trackify-prod  # Define your environment here.
-
+  ENVIRONMENT: trackify-prod
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,8 +19,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets[format('AWS_ACCESS_KEY_ID_{0}', env.ENVIRONMENT)] }}
-          aws-secret-access-key: ${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', env.ENVIRONMENT)] }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
 
       - name: Login to Amazon ECR
@@ -52,4 +52,4 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: trackify-service
           cluster: trackify-nodejs
-          wait-for-service-stability
+          wait-for-service-stability: true
