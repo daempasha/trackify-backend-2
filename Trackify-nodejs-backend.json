@@ -1,5 +1,4 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:eu-west-2:057392469656:task-definition/Trackify-nodejs-backend:1",
   "containerDefinitions": [
     {
       "name": "trackify-backend",
@@ -39,7 +38,6 @@
   "family": "Trackify-nodejs-backend",
   "executionRoleArn": "arn:aws:iam::057392469656:role/ecsTaskExecutionRole",
   "networkMode": "awsvpc",
-  "revision": 1,
   "cpu": "512",
   "memory": "2048",
   "requiresCompatibilities": [
