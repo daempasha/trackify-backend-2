@@ -35,4 +35,5 @@ This command will start a Docker container with your Node.js application running
 
 The next steps involve setting up a CI/CD pipeline to deploy the Dockerized application to AWS ECS using GitHub Actions.
 
-API IS RUNNING LOCALLY ON LOCALHOST:8000c
+API IS RUNNING LOCALLY ON LOCALHOST:8000
+d
