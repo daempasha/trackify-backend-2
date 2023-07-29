@@ -39,7 +39,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ./aws/Trackify-nodejs-backendg.json
+          task-definition: ./aws/Trackify-nodejs-backend.json
           container-name: trackify-backed
           image: ${{ steps.build-image.outputs.image }}
 
