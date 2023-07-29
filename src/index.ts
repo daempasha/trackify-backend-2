@@ -14,11 +14,11 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT;
-
+var base = process.env.PWD;
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
 let ca: string;
 try {
-  ca = fs.readFileSync(path.resolve(__dirname, '../global-bundle.pem'), 'utf8');
+  ca = fs.readFileSync(path.join(base, '../global-bundle.pem'), 'utf8');
 } catch (err) {
   console.error('Error reading certificate file:', err);
   process.exit(1);
