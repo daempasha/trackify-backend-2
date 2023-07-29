@@ -14,25 +14,20 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT;
-var base = process.env.PWD;
+const base = process.env.PWD;
+
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
-let ca: string;
-try {
-  ca = fs.readFileSync(path.join(base, '../global-bundle.pem'), 'utf8');
-} catch (err) {
-  console.error('Error reading certificate file:', err);
-  process.exit(1);
-}
+const ca = fs.readFileSync(base + '../global-bundle.pem'), 'utf8');
 
 const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  ssl: true,
-  sslValidate: true,
-  sslCA: ca, // We're now assigning sslCA with the string directly.
-  sslKey: ca,
-  sslCert: ca,
-  retryWrites: false,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    ssl: true,
+    sslValidate: true,
+    sslCA: ca,
+    sslKey: ca,
+    sslCert: ca,
+    retryWrites: false
 };
 
 const client = new MongoClient(mongodb_uri, options);
