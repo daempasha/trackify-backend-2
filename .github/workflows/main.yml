@@ -50,6 +50,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
+          cluster: trackify-cluster
           service: trackify-service
-          cluster: trackify-nodejs
           wait-for-service-stability: true
