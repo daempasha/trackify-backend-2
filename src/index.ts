@@ -13,10 +13,10 @@ import path from 'path';
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT;
+const port = process.env.PORTt;
 
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
-const ca = fs.readFileSync(path.join(__dirname, 'global-bundle.pem'), 'utf8'); // provide the path to your certificate
+const ca = fs.readFileSync(path.join(__dirname, '../global-bundle.pem'), 'utf8');
 
 const options = {
     useNewUrlParser: true,
