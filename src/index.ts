@@ -29,11 +29,12 @@ const options = {
   useUnifiedTopology: true,
   ssl: true,
   sslValidate: true,
-  sslCA: [ca],
+  sslCA: ca, // We're now assigning sslCA with the string directly.
   sslKey: ca,
   sslCert: ca,
   retryWrites: false,
 };
+
 const client = new MongoClient(mongodb_uri, options);
 
 client.connect()
