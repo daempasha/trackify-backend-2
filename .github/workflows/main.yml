@@ -11,16 +11,22 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    environment: trackify-prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Set environment specific variables
+        id: vars
+        run: |
+          echo "::set-output name=aws_access_key_id::${{ secrets[format('AWS_ACCESS_KEY_ID_{0}', env.ENVIRONMENT)] }}"
+          echo "::set-output name=aws_secret_access_key::${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', env.ENVIRONMENT)] }}"
+      
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          aws-secret-access-key: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          aws-access-key-id: ${{ steps.vars.outputs.aws_access_key_id }}
+          aws-secret-access-key: ${{ steps.vars.outputs.aws_secret_access_key }}
           aws-region: eu-west-2
 
       - name: Login to Amazon ECR
