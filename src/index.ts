@@ -17,7 +17,7 @@ const port = process.env.PORT;
 const base = process.env.PWD;
 
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
-const ca = fs.readFileSync(base + '../global-bundle.pem'), 'utf8');
+const ca = fs.readFileSync((base + '../global-bundle.pem'), 'utf8');
 
 const options = {
     useNewUrlParser: true,
