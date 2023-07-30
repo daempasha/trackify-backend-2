@@ -15,6 +15,8 @@ const port = process.env.PORT || 3000;
 
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
 
+console.log(`Connecting to MongoDB at ${mongodb_uri}`);  // Logs the MongoDB URI
+
 const client = new MongoClient(mongodb_uri, {
     tlsCAFile: path.resolve(__dirname, '../global-bundle.pem'),
     retryWrites: false
@@ -22,6 +24,7 @@ const client = new MongoClient(mongodb_uri, {
 
 const main = async () => {
     try {
+        console.log('Attempting to connect to MongoDB...');  // Logs the attempt to connect
         await client.connect();
         console.log("Connected!");
         const db = client.db('trackify');
@@ -43,8 +46,8 @@ const main = async () => {
             console.log(`⚡️[server]: Server is running at http://127.0.0.1:${port}`);
         });
     } catch (e) {
-        console.error(e);
+        console.error('Error:', e);
     }
 }
 
-main().catch(console.error);
+main().catch(err => console.error('Unhandled Promise Rejection:', err));  // More explicit error message
