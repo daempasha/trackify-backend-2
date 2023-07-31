@@ -15,8 +15,6 @@ const port = process.env.PORT || 3000;
 
 const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
 
-console.log(`Connecting to MongoDB at ${mongodb_uri}`);  // Logs the MongoDB URI
-
 const client = new MongoClient(mongodb_uri, {
     tlsCAFile: path.resolve(__dirname, '../global-bundle.pem'),
     retryWrites: false
