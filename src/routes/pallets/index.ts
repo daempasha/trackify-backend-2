@@ -3,7 +3,7 @@ import multer from "multer";
 import xlsx from "xlsx";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { formatQuantity, formatRows, formatLength } from "./helpers";
 import { PreformattedPallet, FormattedItem } from "./types";
 
@@ -11,14 +11,14 @@ const upload = multer();
 const router = express.Router();
 
 // Create a standard DynamoDB client
-const dynamoDbClient = new DynamoDBClient({ region: 'eu-west-2' }); // update region accordingly
+const dynamoDbClient = new DynamoDBClient({ region: "eu-west-2" }); // update region accordingly
 
 // Create a document client from the standard client
 const client = DynamoDBDocumentClient.from(dynamoDbClient);
 
 router.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
   const file = req.file;
-  const data = file ?.buffer;
+  const data = file?.buffer;
   const workbook = xlsx.read(data, { type: "buffer" });
 
   const sheetName = workbook.SheetNames[0];
@@ -34,8 +34,8 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
     Item: {
       id: palletId,
       name: jsonData[0].LOT,
-      _dateImported: new Date().toISOString()
-    }
+      _dateImported: new Date().toISOString(),
+    },
   };
 
   // Save Pallet
@@ -56,15 +56,14 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
         EAN: item.EAN,
         Currency: item.Currency,
         Country: item.Country,
-        _dateImported: new Date().toISOString()
-      }
+        _dateImported: new Date().toISOString(),
+      },
     };
     await client.send(new PutCommand(params));
   }
 
   res.status(201).json({ message: "Successfully imported pallet!" });
 });
-
 
 //
 // router.get("/:id/details", async (req: Request, res: Response) => {
