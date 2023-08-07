@@ -1,27 +1,24 @@
 import express, { Request, Response } from "express";
-import { Pallet } from "../../models/pallets";
-import { Item } from "../../models/items";
-import { FormattedItem, PreformattedPallet } from "./types";
 import multer from "multer";
 import xlsx from "xlsx";
-import { formatQuantity, formatRows } from "./helpers";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { v4 as uuidv4 } from 'uuid';
+import { formatQuantity, formatRows, formatLength } from "./helpers";
+import { PreformattedPallet, FormattedItem } from "./types";
 
 const upload = multer();
-
 const router = express.Router();
 
-function formatLength(data: FormattedItem[]) {
-  return data.map((item) => {
-    return {
-      ...item,
-      Title: item.Title.length >= 76 ? item.Title.substring(0, 76) : item.Title,
-    };
-  });
-}
+// Create a standard DynamoDB client
+const dynamoDbClient = new DynamoDBClient({ region: 'eu-west-2' }); // update region accordingly
+
+// Create a document client from the standard client
+const client = DynamoDBDocumentClient.from(dynamoDbClient);
 
 router.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
   const file = req.file;
-  const data = file?.buffer;
+  const data = file ?.buffer;
   const workbook = xlsx.read(data, { type: "buffer" });
 
   const sheetName = workbook.SheetNames[0];
@@ -29,111 +26,121 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
 
   const jsonData: PreformattedPallet[] = xlsx.utils.sheet_to_json(worksheet);
 
-  const pallet = new Pallet({
-    name: jsonData[0].LOT,
-  });
-  await pallet.save();
+  // generate a new UUID for pallet id
+  const palletId = uuidv4();
 
-  const formattedData = formatRows(pallet._id, jsonData);
+  const pallet = {
+    TableName: "trackifyapi-test-trackify-dynamodb-table",
+    Item: {
+      id: palletId,
+      name: jsonData[0].LOT,
+      _dateImported: new Date().toISOString()
+    }
+  };
+
+  // Save Pallet
+  await client.send(new PutCommand(pallet));
+
+  const formattedData = formatRows(palletId, jsonData);
   const formatLimitLength = formatLength(formattedData);
   const formattedQuantityData = formatQuantity(formatLimitLength);
 
-  await Item.insertMany(formattedQuantityData);
-  res.status(201).json({ message: "Succesfully imported pallet!" });
-  // res.send(jsonData);
-});
-
-router.get("/:id/details", async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const pallet = await Pallet.findOne({ _id: id });
-  res.send({ message: "Succesfully retrieved details", data: pallet });
-});
-
-router.get("/:id", async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const pageNumber = parseInt(req.query.pageNumber as string);
-  const rowsPerPage = parseInt(req.query.rowsPerPage as string);
-  const sortDirection = req.query.sortDirection;
-  const sortField = req.query.sortField;
-  const search = req.query.search;
-  const statusFilter = req.query.statusFilter;
-
-  const searchFilters = [
-    {
-      pallet: id,
-      ...(search ? { Title: { $regex: search, $options: "i" } } : {}),
-      ...(statusFilter !== "all" ? { Status: statusFilter } : {}),
-    },
-  ];
-
-  let sortOptions: { [key: string]: any } = {};
-  if (sortField && sortDirection) {
-    sortOptions[sortField as string] = sortDirection === "desc" ? -1 : 1;
+  // Save Items
+  for (let item of formattedQuantityData) {
+    const params = {
+      TableName: "trackifyapp-test-trackify-dynamodb",
+      Item: {
+        pallet: item.pallet,
+        Title: item.Title,
+        Description: item.Description,
+        EAN: item.EAN,
+        Currency: item.Currency,
+        Country: item.Country,
+        _dateImported: new Date().toISOString()
+      }
+    };
+    await client.send(new PutCommand(params));
   }
 
-  const rowsToSkip = Math.max((pageNumber - 1) * rowsPerPage, 0);
-
-  const pallet = await Pallet.findOne({ _id: id });
-
-  const itemCount = await Item.countDocuments({ $and: searchFilters });
-  const items = await Item.find({ $and: searchFilters })
-    .collation({ locale: "en", strength: 2 })
-    .sort(sortOptions)
-    .skip(rowsToSkip)
-    .limit(rowsPerPage);
-
-  res.json({
-    message: "Retrieved items!",
-    data: items,
-    pallet,
-    noOfRows: rowsPerPage,
-    currentPage: pageNumber,
-    totalRows: itemCount,
-  });
+  res.status(201).json({ message: "Successfully imported pallet!" });
 });
 
-router.get("/", async (req: Request, res: Response) => {
-  try {
-    const pallets = await Pallet.find();
 
-    const updatedPallets = await Promise.all(
-      pallets.map(async (pallet) => {
-        const itemCount = await Item.countDocuments({ pallet: pallet.id });
-        return {
-          ...pallet.toObject(),
-          itemCount,
-        };
-      }),
-    );
+//
+// router.get("/:id/details", async (req: Request, res: Response) => {
+//   const id = req.params.id;
+//   const params = {
+//     TableName: 'Pallets',
+//     Key: { id: id },
+//   };
+//   const command = new GetCommand(params);
+//   const { Item } = await client.send(command);
+//
+//   res.send({ message: "Successfully retrieved details", data: Item });
+// });
+//
+// router.get("/", async (_req: Request, res: Response) => {
+//   const command = new ScanCommand({ TableName: 'Pallets' });
+//   const { Items } = await client.send(command);
+//
+//   if (!Items) {
+//     return res.json({ data: [] });
+//   }
+//
+//   const updatedPallets = await Promise.all(
+//     Items.map(async (pallet) => {
+//       const itemCountCommand = new QueryCommand({
+//         TableName: 'Items',
+//         KeyConditionExpression: 'pallet = :pallet',
+//         ExpressionAttributeValues: {
+//           ':pallet': pallet.id
+//         }
+//       });
+//       const { Count: itemCount } = await client.send(itemCountCommand);
+//
+//       return {
+//         ...pallet,
+//         itemCount,
+//       };
+//     }),
+//   );
+//
+//   res.json({ data: updatedPallets });
+// });
+//
+// router.post("/", async (req: Request, res: Response) => {
+//   const palletId = uuidv4();
+//   const newPallet = {
+//     TableName: 'Pallets',
+//     Item: {
+//       id: palletId,
+//       name: req.body.name,
+//       _dateCreated: new Date().toISOString()
+//     }
+//   };
+//
+//   await client.send(new PutCommand(newPallet));
+//
+//   res.status(201).json(newPallet.Item);
+// });
+//
+// router.delete("/:id", async (req: Request, res: Response) => {
+//   const id = req.params.id;
+//
+//   // Deleting a Pallet
+//   const deletePallet = new DeleteCommand({
+//     TableName: 'Pallets',
+//     Key: {
+//       id: id
+//     }
+//   });
+//
+//   await client.send(deletePallet);
+//
+//   // Note: There is no direct operation to delete many in DynamoDB, you have to delete items one by one
+//   // Here, for simplicity, items associated with the pallet are not deleted.
+//
+//   res.status(201).json({ message: "Successfully deleted pallet!" });
+// });
 
-    res.json({ data: updatedPallets });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-router.post("/", async (req: Request, res: Response) => {
-  const pallet = new Pallet({
-    name: req.body.name,
-  });
-
-  try {
-    const newPallet = await pallet.save();
-    res.status(201).json(newPallet);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-router.delete("/:id", async (req: Request, res: Response) => {
-  const id = req.params.id;
-
-  try {
-    await Pallet.deleteOne({ _id: id });
-    await Item.deleteMany({ pallet: id });
-    res.status(201).json({ message: "Successfully deleted pallet!" });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
 export default router;

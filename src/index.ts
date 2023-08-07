@@ -1,31 +1,38 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { MongoClient } from 'mongodb';
+import { DynamoDBClient, ListTablesCommand } from "@aws-sdk/client-dynamodb";  // Ensure ListTablesCommand is imported
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import palletRouter from "./routes/pallets";
 import itemsRouter from "./routes/items";
 import ebayRouter from "./routes/ebay";
 import cors from "cors";
 import morgan from "morgan";
-import path from 'path';
 
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8000;
+const region = process.env.AWS_REGION || 'eu-west-2'; // specify your AWS region
 
-const mongodb_uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trackify";
-
-const client = new MongoClient(mongodb_uri, {
-    tlsCAFile: path.resolve(__dirname, '../global-bundle.pem'),
-    retryWrites: false
+// AWS DynamoDB configuration
+const dynamoDbClient = new DynamoDBClient({
+  region: region,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "default",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "default"
+  }
 });
+
+const dynamodbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
 const main = async () => {
     try {
-        console.log('Attempting to connect to MongoDB...');  // Logs the attempt to connect
-        await client.connect();
-        console.log("Connected!");
-        const db = client.db('trackify');
+        console.log('Attempting to connect to DynamoDB...');
+
+        // Correctly use ListTablesCommand with dynamoDbClient.send()
+        const tables = await dynamoDbClient.send(new ListTablesCommand({}));
+        console.log("Connected to DynamoDB!");
+        console.log("Tables: ", tables.TableNames);
 
         app.use(morgan("tiny"));
         app.use(express.urlencoded({ extended: true }));
@@ -40,9 +47,14 @@ const main = async () => {
             res.send({ message: "Hello world" });
         });
 
-        app.listen(port, () => {
-            console.log(`⚡️[server]: Server is running at http://127.0.0.1:${port}`);
+        app.get("/healthcheck", (req: Request, res: Response) => {
+            res.send({ message: "Health check OK" });
         });
+
+        app.listen(port, () => {
+            console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+        });
+
     } catch (e) {
         console.error('Error:', e);
     }
