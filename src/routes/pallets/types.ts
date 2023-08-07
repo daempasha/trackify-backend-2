@@ -16,4 +16,6 @@ export interface FormattedItem {
   Quantity?: number;
   Currency: string;
   Country: string;
+  pallet: string;
 }
+

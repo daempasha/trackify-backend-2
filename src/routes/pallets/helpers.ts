@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
 import { FormattedItem, PreformattedPallet } from "./types";
 
-export function formatRows(palletId: mongoose.Types.ObjectId, jsonData: PreformattedPallet[]) {
+export function formatRows(palletId: string, jsonData: PreformattedPallet[]): FormattedItem[] {
   return jsonData.map((itemData) => ({
     Title: itemData.Item,
     Description: itemData.Item,
@@ -18,11 +17,22 @@ export function formatQuantity(data: FormattedItem[]) {
 
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
-    for (let j = 0; j < row.Quantity!; j++) {
+    const quantity = row.Quantity ?? 0; // Ensure that quantity is a number, falling back to 0 if undefined
+    for (let j = 0; j < quantity; j++) {
       const { Quantity, ...restOfRow } = row;
-      formattedData.push({ ...restOfRow, Title: j > 0 ? `${row.Title} - ${j}` : row.Title });
+      const title = j > 0 ? `${row.Title} - ${j}` : row.Title;
+      formattedData.push({ ...restOfRow, Title: title });
     }
   }
 
   return formattedData;
+}
+
+export function formatLength(data: FormattedItem[]) {
+  return data.map((item) => {
+    return {
+      ...item,
+      Title: item.Title.length >= 76 ? item.Title.substring(0, 76) : item.Title,
+    };
+  });
 }
