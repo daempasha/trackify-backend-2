@@ -7,6 +7,13 @@ import itemsRouter from "./routes/items";
 import ebayRouter from "./routes/ebay";
 import cors from "cors";
 import morgan from "morgan";
+import session from "express-session";
+
+declare module "express-session" {
+  interface SessionData {
+    token: string;
+  }
+}
 
 dotenv.config();
 
@@ -34,6 +41,23 @@ const main = async () => {
     console.log("Connected to DynamoDB!");
     console.log("Tables: ", tables.TableNames);
 
+    const sess: {
+      secret: string;
+      cookie: {
+        secure?: boolean;
+      };
+      [key: string]: any;
+    } = {
+      secret: "warrior king",
+      cookie: {},
+      resave: true,
+      saveUninitialized: true,
+    };
+
+    app.set("trust proxy", 1);
+    sess.cookie.secure = true;
+
+    app.use(session(sess));
     app.use(morgan("tiny"));
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
